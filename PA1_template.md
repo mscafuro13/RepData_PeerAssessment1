@@ -79,45 +79,59 @@ str(activityIntervalMean)
 ##  $ steps   : num  1.717 0.3396 0.1321 0.1509 0.0755 ...
 ```
 
-```r
-head(activityIntervalMean)
-```
-
-```
-##   interval     steps
-## 1        0 1.7169811
-## 2        5 0.3396226
-## 3       10 0.1320755
-## 4       15 0.1509434
-## 5       20 0.0754717
-## 6       25 2.0943396
-```
-
-```r
-tail(activityIntervalMean)
-```
-
-```
-##     interval     steps
-## 283     2330 2.6037736
-## 284     2335 4.6981132
-## 285     2340 3.3018868
-## 286     2345 0.6415094
-## 287     2350 0.2264151
-## 288     2355 1.0754717
-```
-
 ##### Plot average numbers of steps per 5 minute interval across all days
 
 ```r
-plot(y = activityIntervalMean$steps, x = activityIntervalMean$interval, type = "l", ylab = 'Steps', xlab = 'Interval')
+plot(y = activityIntervalMean$steps, x = activityIntervalMean$interval, 
+        type = "l", ylab = 'Steps', xlab = 'Interval')
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
+##### Find interval with maximum number of steps
 
+```r
+activityIntervalMean[which.max(activityIntervalMean$steps),]$interval
+```
+
+```
+## [1] 835
+```
 ## Imputing missing values
+##### Calculate and report total number of missing values
 
+```r
+nrow(activity[is.na(activity),])
+```
 
+```
+## [1] 2304
+```
+
+##### Fill in all missing values in the dataset.  Missing values will be substituted with the mean value across all days for that interval.
+
+```r
+# Merge original data frame with activityIntervalMean
+tempActivity <- merge(activity, activityIntervalMean, by = "interval")
+# Replace NA values with the interval mean
+tempActivity$steps.x[is.na(tempActivity$steps.x)] <- tempActivity$steps.y[is.na(tempActivity$steps.x)]
+# Reorder data frame by date and interval
+tempActivity <- tempActivity[order(tempActivity$date,tempActivity$interval),]
+
+# Reset row index
+rownames(tempActivity) <- NULL
+# Create new data set with only columns of interest
+activityClean <- tempActivity[,c("steps.x","date","interval")]
+# Rename columns to original names
+names(activityClean) <- c("steps","date","interval")
+str(activityClean)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : num  1.717 0.3396 0.1321 0.1509 0.0755 ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?

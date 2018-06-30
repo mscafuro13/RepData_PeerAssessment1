@@ -47,18 +47,40 @@ median(activityDailySum$steps)
 ```{R}
 activityIntervalMean <- aggregate(steps ~ interval, activity, FUN=mean, na.rm = TRUE)
 str(activityIntervalMean)
-head(activityIntervalMean)
-tail(activityIntervalMean)
 ```
 
 ##### Plot average numbers of steps per 5 minute interval across all days
 ```{R}
-plot(y = activityIntervalMean$steps, x = activityIntervalMean$interval, type = "l", ylab = 'Steps', xlab = 'Interval')
+plot(y = activityIntervalMean$steps, x = activityIntervalMean$interval, 
+        type = "l", ylab = 'Steps', xlab = 'Interval')
 ```
 
-
+##### Find interval with maximum number of steps
+```{R}
+activityIntervalMean[which.max(activityIntervalMean$steps),]$interval
+```
 ## Imputing missing values
+##### Calculate and report total number of missing values
+```{R}
+nrow(activity[is.na(activity),])
+```
 
+##### Fill in all missing values in the dataset.  Missing values will be substituted with the mean value across all days for that interval.
+```{R}
+# Merge original data frame with activityIntervalMean
+tempActivity <- merge(activity, activityIntervalMean, by = "interval")
+# Replace NA values with the interval mean
+tempActivity$steps.x[is.na(tempActivity$steps.x)] <- tempActivity$steps.y[is.na(tempActivity$steps.x)]
+# Reorder data frame by date and interval
+tempActivity <- tempActivity[order(tempActivity$date,tempActivity$interval),]
 
+# Reset row index
+rownames(tempActivity) <- NULL
+# Create new data set with only columns of interest
+activityClean <- tempActivity[,c("steps.x","date","interval")]
+# Rename columns to original names
+names(activityClean) <- c("steps","date","interval")
+str(activityClean)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
