@@ -22,6 +22,10 @@ if(!file.exists("activity.csv")){
     unzip("activity.zip")
 }
 activity <- read.csv("activity.csv")
+
+# Convert the date to a date type
+activity$date <- as.Date(activity$date, format = "%Y-%m-%d")
+str(activity)
 ```
 
 ## What is mean total number of steps taken per day?
@@ -65,7 +69,7 @@ activityIntervalMean[which.max(activityIntervalMean$steps),]$interval
 nrow(activity[is.na(activity),])
 ```
 
-##### Fill in all missing values in the dataset.  Missing values will be substituted with the mean value across all days for that interval.
+##### Fill in all missing values in the dataset.  Missing values will be substituted with the mean value across all days for the given interval.
 ```{R}
 # Merge original data frame with activityIntervalMean
 tempActivity <- merge(activity, activityIntervalMean, by = "interval")
@@ -83,4 +87,44 @@ names(activityClean) <- c("steps","date","interval")
 str(activityClean)
 ```
 
+##### Create histogram of total number of steps taken each day
+```{R}
+hist(aggregate(steps ~ date, activityClean, FUN = sum)$steps, xlab = "Steps Per Day", 
+        main = "Histogram of Steps Per Day With Imputed Values")
+```
+
+##### Calculate mean and median
+```{R}
+mean(aggregate(steps ~ date, activityClean, FUN = sum)$steps)
+median(aggregate(steps ~ date, activityClean, FUN = sum)$steps)
+```
+
+- In the histogram, the distribution remained relatively unchanged between the original data set and the data set with imputed values. The frequency changed, but this is expected as additional values were added.
+- The mean did not change between the original data set and the data set with imputed values. This is due to the fact the missing values were replaced with the mean values for the given time interval.
+- The median slighly shifted from 10,765 to 10,766.19. This is likely due to the way the distribution very slightly changed to either side of the median based on the introduction of additional values.
+
 ## Are there differences in activity patterns between weekdays and weekends?
+##### Create factor column in the data set with "Weekend" or "Weekday"
+```{R}
+weekdays <- c("Monday","Tuesday","Wednesday","Thursday","Friday")
+activityClean$dayType <- as.factor(ifelse(weekdays(activityClean$date) %in% weekdays, "Weekday", "Weekend"))
+str(activityClean)
+# Create necessary data sets
+activityDailyFactorSum <- aggregate(steps ~ interval + dayType, activityClean, FUN = mean)
+str(activityDailyFactorSum)
+```
+
+##### Create panel plot for average steps for weekdays versus weekends
+```{R}
+library(ggplot2)
+
+g <- ggplot(activityDailyFactorSum, aes(interval, steps))
+g <- g + geom_point() + facet_grid(dayType ~ .) + geom_line() 
+g <- g + ggtitle("Average Daily Steps: Weekday vs. Weekend") + xlab("Interval") + ylab("Steps")
+print(g)
+```
+
+- The weekday step average increases earlier in the day than the weekend plot.
+- The weekday plot has a higher peak.
+- The weekend plot is more consistent through the day.
+
